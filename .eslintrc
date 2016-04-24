@@ -1,4 +1,12 @@
 {
   "root": true,
+  "rules": {
+  	"no-console": 1
+  },
+  "parserOptions": {
+    "ecmaFeatures": {
+      "experimentalObjectRestSpread": true
+    }
+  },
   "extends": "airbnb/base"
 }
