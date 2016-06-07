@@ -1,61 +1,62 @@
 import { Observable } from 'rx';
 
 import { form, input, button } from '@cycle/dom';
+import isolate from '@cycle/isolate';
 
-const intent = DOMSource => {
-  const input$ = DOMSource
-      .select('.todo-input')
-      .events('input')
-      .map(e => e.target.value)
+import constants from './constants';
+
+function intent(DOM) {
+  return Observable.merge(
+    DOM
+        .select('.todo-input')
+        .events('input')
+        .map(e => ({
+          type: constants.FORM_INPUT,
+          value: e.target.value,
+        })),
+    DOM
+        .select('.todo-form')
+        .events('submit')
+        .do(e => e.preventDefault())
+        .map(() => ({
+          type: constants.FORM_SUBMIT,
+        }))
+  )
       .share();
+}
 
-  const submit$ = DOMSource
-      .select('.todo-form')
-      .events('submit')
-      .do(ev => ev.preventDefault());
+function model(action$) {
+  return Observable.merge(
+    action$
+        .filter(({ type }) => type === constants.FORM_INPUT)
+        .map(({ value }) => value),
+    action$
+        .filter(({ type }) => type === constants.FORM_SUBMIT)
+        .map(() => '')
+  )
+      .startWith('');
+}
 
-  return {
-    input$,
-    submit$,
-  };
-};
+function view(state$) {
+  return state$
+      .map(value => form('.todo-form', [
+        input('.todo-input', {
+          type: 'text',
+          value,
+        }),
+        button({ type: 'submit' }, 'Add todo'),
+      ]));
+}
 
-const model = actions => {
-  const { input$, submit$ } = actions;
-
-  const value$ = Observable.merge(
-    input$,
-    submit$.map(() => '')
-  ).startWith('');
-
-  return Observable.combineLatest(
-    value$,
-    value => ({ value })
-  );
-};
-
-const view = state$ => state$.map(({ value }) =>
-  form('.todo-form', [
-    input('.todo-input', {
-      type: 'text',
-      value,
-    }),
-    button({ type: 'submit' }, ['Add todo']),
-  ])
-);
-
-function TodoForm({ DOM }) {
-  const actions = intent(DOM);
-  const state$ = model(actions);
+function todoForm({ DOM }) {
+  const action$ = intent(DOM);
+  const state$ = model(action$);
   const vtree$ = view(state$);
 
   return {
     DOM: vtree$,
-    todo: actions.input$
-        .sample(actions.submit$)
-        .filter(Boolean)
-        .share(),
+    action$,
   };
 }
 
-export default TodoForm;
+export default sources => isolate(todoForm)(sources);

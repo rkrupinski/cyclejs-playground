@@ -25,6 +25,7 @@
     "@cycle/dom": "^9.2.2",
     "@cycle/isolate": "^1.2.0",
     "@cycle/storage": "^2.0.3",
+    "aphrodite": "^0.3.1",
     "rx": "^4.1.0"
   }
 }

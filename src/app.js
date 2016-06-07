@@ -1,78 +1,126 @@
-import { Observable } from 'rx';
+import { Observable, Subject } from 'rx';
 
 import { run } from '@cycle/core';
 import { makeDOMDriver, div } from '@cycle/dom';
-import isolate from '@cycle/isolate';
 import storageDriver from '@cycle/storage';
 
-import TodoForm from './todoForm';
-import TodoList from './todoList';
+import constants from './constants';
+import todoForm from './todoForm';
+import todoList from './todoList';
 
 import { serialize, deserialize } from './utils';
 
-const STORAGE_KEY = 'todos';
+const STORAGE_KEY = '__todos';
 
-function main(sources) {
-  const todoFormSinks = isolate(TodoForm)(sources);
-  const todoListSinks = isolate(TodoList)({ ...sources });
-
-  const initialTodosData$ = sources.storage.local
-      .getItem(STORAGE_KEY)
-      .map(deserialize)
-      .take(1);
-
-  const intent = todoSource => {
-    const addTodo$ = todoSource;
-
-    return {
-      addTodo$,
-    };
-  };
-
-  const model = (act, todosData$) => {
-    const addTodoMod$ = act.addTodo$
-        .map(body => todoData => {
-          const lastId = todoData.length ?
-              todoData[todoData.length - 1].id :
-              0;
-
-          todoData.push({
-            id: lastId + 1,
-            completed: false,
-            body,
-          });
-
-          return todoData;
+function ammendState(state$, DOM) {
+  return state$
+      .map(state => {
+        const todoFormSinks = todoForm({ DOM });
+        const todoListProps$ = Observable.just(state);
+        const todoListSinks = todoList({
+          DOM,
+          props$: todoListProps$,
         });
 
-    const modifications$ = Observable.merge(
-      addTodoMod$
-    );
+        return {
+          ...state,
+          form: todoFormSinks,
+          list: todoListSinks,
+        };
+      });
+}
 
-    return todosData$
-        .concat(modifications$)
-        .scan((todosData, fn) => fn(todosData))
-        .shareReplay(1);
+function intent(formActions$, listActions$) {
+  const formInput$ = formActions$
+      .filter(({ type }) => type === constants.FORM_INPUT);
+
+  const formSubmit$ = formActions$
+      .filter(({ type }) => type === constants.FORM_SUBMIT);
+
+  return {
+    addTodo$: formInput$
+        .sample(formSubmit$)
+        .pluck('value')
+        .filter(Boolean),
+    toggleTodo$: listActions$
+        .filter(({ type }) => type === constants.TODO_TOGGLE),
   };
+}
 
-  const view = () => {
-    const vtree$ = Observable.combineLatest(
-      todoFormSinks.DOM,
-      todoListSinks.DOM,
-      (formTree, listTree) => div([
-        formTree,
-        listTree,
-      ])
-    );
+function model(actions, data$) {
+  const addTodoMod$ = actions.addTodo$
+      .map(body => data => {
+        const { list } = data;
+        const lastId = list.length ?
+            list[list.length - 1].id :
+            0;
 
-    return vtree$;
-  };
+        list.push({
+          id: lastId + 1,
+          completed: false,
+          body,
+        });
 
-  const actions = intent(todoFormSinks.todo);
+        return data;
+      });
+
+  const toggleTodoMod$ = actions.toggleTodo$
+      .map(({ id }) => data => {
+        console.log(id);
+        // TODO: toggling logic :)
+
+        return data;
+      });
+
+  const modifications$ = Observable.merge(
+    addTodoMod$,
+    toggleTodoMod$
+  );
+
+  return data$
+      .concat(modifications$)
+      .scan((data, fn) => fn(data))
+      .shareReplay(1);
+}
+
+function view(state$) {
+  return state$
+      .map(state => Observable.combineLatest(
+        state.form.DOM,
+        state.list.DOM,
+        (formTree, listTree) => div([
+          formTree,
+          listTree,
+        ])
+      ));
+}
+
+function main({ DOM, storage }) {
+  const localStorageData$ = storage.local
+      .getItem(STORAGE_KEY)
+      .take(1);
+
+  const initialTodosData$ = deserialize(localStorageData$);
+
+  const proxyFormActions$ = new Subject();
+  const proxyListActions$ = new Subject();
+
+  const actions = intent(proxyFormActions$, proxyListActions$);
 
   const state$ = model(actions, initialTodosData$);
 
-  const vtree$ = view(state$);
+  const ammendedState$ = ammendState(state$, DOM);
+
+  const formActions$ = ammendedState$.flatMapLatest(({ form }) =>
+      form.action$);
+
+  const listActions$ = ammendedState$.flatMapLatest(({ list }) =>
+      list.action$);
+
+  formActions$.subscribe(proxyFormActions$);
+  listActions$.subscribe(proxyListActions$);
+
+  const vtree$ = view(ammendedState$);
 
   const storage$ = state$
       .map(serialize)
