@@ -1,16 +1,16 @@
 import { Observable } from 'rx';
 import { StyleSheet, css } from 'aphrodite';
 
-import { li } from '@cycle/dom';
+import { li, span } from '@cycle/dom';
 import isolate from '@cycle/isolate';
 
 import constants from './constants';
 
 const styles = StyleSheet.create({
-  todoItem: {
+  todoToggle: {
     cursor: 'pointer',
     ':hover': {
-      background: 'gainsboro',
+      background: 'lightcyan',
     },
   },
 });
@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
 function intent(DOM) {
   return Observable.merge(
     DOM
-        .select('li')
+        .select('.todo-toggle')
         .events('click')
         .map(() => ({ type: constants.TODO_TOGGLE }))
   )
@@ -31,12 +31,14 @@ function model(props$) {
 
 function view(state$) {
   return state$
-      .map(({ body, completed }) => li({
-        className: css(styles.todoItem),
-        style: {
-          textDecoration: completed ? 'line-through' : 'none',
-        },
-      }, body));
+      .map(({ body, completed }) => li(
+        span({
+          className: `${css(styles.todoToggle)} todo-toggle`,
+          style: {
+            textDecoration: completed ? 'line-through' : 'none',
+          },
+        }, body)
+      ));
 }
 
 function todoItem({ DOM, props$ }) {

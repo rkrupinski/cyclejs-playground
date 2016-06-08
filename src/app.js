@@ -1,4 +1,5 @@
 import { Observable, Subject } from 'rx';
+import pick from 'lodash.pick';
 
 import { run } from '@cycle/core';
 import { makeDOMDriver, div } from '@cycle/dom';
@@ -12,22 +13,21 @@ import { serialize, deserialize } from './utils';
 
 const STORAGE_KEY = '__todos';
 
-function ammendState(state$, DOM) {
-  return state$
-      .map(state => {
-        const todoFormSinks = todoForm({ DOM });
-        const todoListProps$ = Observable.just(state);
-        const todoListSinks = todoList({
-          DOM,
-          props$: todoListProps$,
-        });
+function ammendState(DOM) {
+  return function mapFn(state) {
+    const formSinks = todoForm({ DOM });
+    const listProps$ = Observable.just(pick(state, 'list'));
+    const listSinks = todoList({
+      DOM,
+      props$: listProps$,
+    });
 
-        return {
-          ...state,
-          form: todoFormSinks,
-          list: todoListSinks,
-        };
-      });
+    return {
+      ...state,
+      form: formSinks,
+      list: listSinks,
+    };
+  };
 }
 
 function intent(formActions$, listActions$) {
@@ -66,8 +66,7 @@ function model(actions, data$) {
 
   const toggleTodoMod$ = actions.toggleTodo$
       .map(({ id }) => data => {
-        console.log(id);
-        // TODO: toggling logic :)
+        console.log(`toggle: ${id}`);
 
         return data;
       });
@@ -109,13 +108,15 @@ function main({ DOM, storage }) {
 
   const state$ = model(actions, initialTodosData$);
 
-  const ammendedState$ = ammendState(state$, DOM);
+  const ammendedState$ = state$
+      .map(ammendState(DOM))
+      .shareReplay(1);
 
-  const formActions$ = ammendedState$.flatMapLatest(({ form }) =>
-      form.action$);
+  const formActions$ = ammendedState$
+      .flatMapLatest(({ form }) => form.action$);
 
-  const listActions$ = ammendedState$.flatMapLatest(({ list }) =>
-      list.action$);
+  const listActions$ = ammendedState$
+      .flatMapLatest(({ list }) => list.action$);
 
   formActions$.subscribe(proxyFormActions$);
   listActions$.subscribe(proxyListActions$);

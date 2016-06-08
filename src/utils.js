@@ -1,5 +1,9 @@
-export const deserialize = data$ => data$
-    .map(data => JSON.parse(data) || {})
-    .map(data => ({ list: [], ...data }));
+export function deserialize(data$) {
+  return data$
+      .map(data => JSON.parse(data) || {})
+      .map(data => ({ list: [], ...data }));
+}
 
-export const serialize = data => JSON.stringify(data);
+export function serialize(state) {
+  return JSON.stringify(state);
+}

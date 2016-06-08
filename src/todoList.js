@@ -5,19 +5,24 @@ import isolate from '@cycle/isolate';
 
 import todoItem from './todoItem';
 
-function ammendState(state$, DOM) {
-  return state$
-      .map(state => ({
-        ...state,
-        list: state.list.map(data => {
-          const todoItemProps$ = Observable.just(data);
+function ammendState(DOM) {
+  return function mapFn(state) {
+    return {
+      ...state,
+      list: state.list.map(data => {
+        const itemProps$ = Observable.just(data);
+        const itemSinks = todoItem({
+          DOM,
+          props$: itemProps$,
+        });
 
-          return {
-            ...data,
-            todoItem: todoItem({ DOM, props$: todoItemProps$ }),
-          };
-        }),
-      }));
+        return {
+          ...data,
+          todoItem: itemSinks,
+        };
+      }),
+    };
+  };
 }
 
 function model(props$) {
@@ -34,7 +39,9 @@ function view(state$) {
 function todoList({ DOM, props$ }) {
   const state$ = model(props$);
 
-  const ammendedState$ = ammendState(state$, DOM);
+  const ammendedState$ = state$
+      .map(ammendState(DOM))
+      .shareReplay(1);
 
   const action$ = ammendedState$.flatMapLatest(({ list }) =>
       Observable.merge(list.map(data => data.todoItem.action$)));
