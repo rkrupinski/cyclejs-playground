@@ -9,6 +9,7 @@ import constants from './constants';
 const styles = StyleSheet.create({
   todoToggle: {
     cursor: 'pointer',
+    userSelect: 'none',
     ':hover': {
       background: 'lightcyan',
     },

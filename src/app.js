@@ -1,5 +1,7 @@
 import { Observable, Subject } from 'rx';
+
 import pick from 'lodash.pick';
+import find from 'lodash.find';
 
 import { run } from '@cycle/core';
 import { makeDOMDriver, div } from '@cycle/dom';
@@ -66,7 +68,10 @@ function model(actions, data$) {
 
   const toggleTodoMod$ = actions.toggleTodo$
       .map(({ id }) => data => {
-        console.log(`toggle: ${id}`);
+        const { list } = data;
+        const todo = find(list, item => item.id === id);
+
+        todo.completed = !todo.completed;
 
         return data;
       });
