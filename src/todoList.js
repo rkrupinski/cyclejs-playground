@@ -1,9 +1,9 @@
 import { Observable } from 'rx';
 
 import { ul } from '@cycle/dom';
-import isolate from '@cycle/isolate';
 
 import todoItem from './todoItem';
+import todoListPlaceholder from './todoListPlaceholder';
 
 function ammendState(DOM) {
   return function mapFn(state) {
@@ -31,9 +31,15 @@ function model(props$) {
 
 function view(state$) {
   return state$
-      .map(state => ul(
-        state.list.map(data => data.todoItem.DOM)
-      ));
+      .map(state => {
+        const hasTodos = !!state.list.length;
+
+        return hasTodos ?
+            ul(
+              state.list.map(data => data.todoItem.DOM)
+            ) :
+            todoListPlaceholder().DOM;
+      });
 }
 
 function todoList({ DOM, props$ }) {
@@ -54,4 +60,4 @@ function todoList({ DOM, props$ }) {
   };
 }
 
-export default sources => isolate(todoList)(sources);
+export default todoList;
