@@ -27,6 +27,7 @@
     "@cycle/storage": "^2.0.3",
     "aphrodite": "^0.3.1",
     "lodash.find": "^4.4.0",
+    "lodash.findindex": "^4.4.0",
     "lodash.pick": "^4.2.1",
     "rx": "^4.1.0"
   }

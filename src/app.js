@@ -2,6 +2,7 @@ import { Observable, Subject } from 'rx';
 
 import pick from 'lodash.pick';
 import find from 'lodash.find';
+import findIndex from 'lodash.findIndex';
 
 import { run } from '@cycle/core';
 import { makeDOMDriver, div } from '@cycle/dom';
@@ -46,6 +47,8 @@ function intent(formActions$, listActions$) {
         .filter(Boolean),
     toggleTodo$: listActions$
         .filter(({ type }) => type === constants.TODO_TOGGLE),
+    deleteTodo$: listActions$
+        .filter(({ type }) => type === constants.TODO_DELETE),
   };
 }
 
@@ -76,9 +79,20 @@ function model(actions, data$) {
         return data;
       });
 
+  const deleteTodoMod$ = actions.deleteTodo$
+      .map(({ id }) => data => {
+        const { list } = data;
+        const index = findIndex(list, item => item.id === id);
+
+        list.splice(index, 1);
+
+        return data;
+      });
+
   const modifications$ = Observable.merge(
     addTodoMod$,
-    toggleTodoMod$
+    toggleTodoMod$,
+    deleteTodoMod$
   );
 
   return data$

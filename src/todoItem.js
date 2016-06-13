@@ -1,7 +1,7 @@
 import { Observable } from 'rx';
 import { StyleSheet, css } from 'aphrodite';
 
-import { li, span } from '@cycle/dom';
+import { li, span, button } from '@cycle/dom';
 import isolate from '@cycle/isolate';
 
 import constants from './constants';
@@ -14,6 +14,9 @@ const styles = StyleSheet.create({
       background: 'lightcyan',
     },
   },
+  todoDelete: {
+    marginLeft: 5,
+  },
 });
 
 function intent(DOM) {
@@ -21,7 +24,11 @@ function intent(DOM) {
     DOM
         .select('.todo-toggle')
         .events('click')
-        .map(() => ({ type: constants.TODO_TOGGLE }))
+        .map(() => ({ type: constants.TODO_TOGGLE })),
+    DOM
+        .select('.todo-delete')
+        .events('click')
+        .map(() => ({ type: constants.TODO_DELETE }))
   )
       .share();
 }
@@ -32,14 +39,17 @@ function model(props$) {
 
 function view(state$) {
   return state$
-      .map(({ body, completed }) => li(
+      .map(({ body, completed }) => li([
         span({
           className: `${css(styles.todoToggle)} todo-toggle`,
           style: {
             textDecoration: completed ? 'line-through' : 'none',
           },
-        }, body)
-      ));
+        }, body),
+        button({
+          className: `${css(styles.todoDelete)} todo-delete`,
+        }, 'x'),
+      ]));
 }
 
 function todoItem({ DOM, props$ }) {
