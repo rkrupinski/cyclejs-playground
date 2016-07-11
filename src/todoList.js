@@ -1,9 +1,17 @@
 import { Observable } from 'rx';
+import { StyleSheet, css } from 'aphrodite';
 
 import { ul } from '@cycle/dom';
 
 import todoItem from './todoItem';
 import todoListPlaceholder from './todoListPlaceholder';
+
+const styles = StyleSheet.create({
+  todoList: {
+    padding: 0,
+    listStyle: 'none',
+  },
+});
 
 function ammendState(DOM) {
   return function mapFn(state) {
@@ -35,9 +43,9 @@ function view(state$) {
         const hasTodos = !!state.list.length;
 
         return hasTodos ?
-            ul(
-              state.list.map(data => data.todoItem.DOM)
-            ) :
+            ul({
+              className: css(styles.todoList),
+            }, state.list.map(data => data.todoItem.DOM)) :
             todoListPlaceholder().DOM;
       });
 }

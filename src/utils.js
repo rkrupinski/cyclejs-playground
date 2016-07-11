@@ -7,3 +7,18 @@ export function deserialize(data$) {
 export function serialize(state) {
   return JSON.stringify(state);
 }
+
+
+class PropertyHook {
+  constructor(fn) {
+    this.fn = fn;
+  }
+
+  hook(...args) {
+    this.fn.apply(this, args);
+  }
+}
+
+export function propHook(fn) {
+  return new PropertyHook(fn);
+}

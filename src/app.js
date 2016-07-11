@@ -43,12 +43,14 @@ function intent(formActions$, listActions$) {
   return {
     addTodo$: formInput$
         .sample(formSubmit$)
-        .pluck('value')
+        .pluck('body')
         .filter(Boolean),
     toggleTodo$: listActions$
         .filter(({ type }) => type === constants.TODO_TOGGLE),
     deleteTodo$: listActions$
         .filter(({ type }) => type === constants.TODO_DELETE),
+    updateTodo$: listActions$
+        .filter(({ type, body }) => type === constants.TODO_DONE_EDITING && body),
   };
 }
 
@@ -63,7 +65,7 @@ function model(actions, data$) {
         list.push({
           id: lastId + 1,
           completed: false,
-          body,
+          body: body.trim(),
         });
 
         return data;
@@ -89,10 +91,21 @@ function model(actions, data$) {
         return data;
       });
 
+  const editTodoMod$ = actions.updateTodo$
+      .map(({ id, body }) => data => {
+        const { list } = data;
+        const index = findIndex(list, item => item.id === id);
+
+        list[index].body = body.trim();
+
+        return data;
+      });
+
   const modifications$ = Observable.merge(
     addTodoMod$,
     toggleTodoMod$,
-    deleteTodoMod$
+    deleteTodoMod$,
+    editTodoMod$
   );
 
   return data$

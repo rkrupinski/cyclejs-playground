@@ -12,7 +12,7 @@ function intent(DOM) {
         .events('input')
         .map(e => ({
           type: constants.FORM_INPUT,
-          value: e.target.value,
+          body: e.target.value,
         })),
     DOM
         .select('.todo-form')
