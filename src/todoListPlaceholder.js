@@ -13,7 +13,7 @@ function todoListPlaceholder() {
 
   return {
     DOM: vtree$,
-    action$: Observable.empty(),
+    action$: Observable.empty(), // I wish I used TypeScript :(
   };
 }
 
