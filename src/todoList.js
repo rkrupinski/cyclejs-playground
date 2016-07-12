@@ -5,7 +5,6 @@ import { ul, div, button } from '@cycle/dom';
 
 import constants from './constants';
 import todoItem from './todoItem';
-import todoListPlaceholder from './todoListPlaceholder';
 
 const styles = StyleSheet.create({
   todoList: {
@@ -49,18 +48,12 @@ function model(props$) {
 
 function view(state$) {
   return state$
-      .map(state => {
-        const hasTodos = !!state.list.length;
-
-        return hasTodos ?
-            div([
-              ul({
-                className: css(styles.todoList),
-              }, state.list.map(data => data.todoItem.DOM)),
-              button('.toggle-btn', 'Toggle all'),
-            ]) :
-            todoListPlaceholder().DOM;
-      });
+      .map(state => div([
+        ul({
+          className: css(styles.todoList),
+        }, state.list.map(data => data.todoItem.DOM)),
+        button('.toggle-btn', 'Toggle all'),
+      ]));
 }
 
 function todoList({ DOM, props$ }) {

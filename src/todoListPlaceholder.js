@@ -13,6 +13,7 @@ function todoListPlaceholder() {
 
   return {
     DOM: vtree$,
+    action$: Observable.empty(),
   };
 }
 

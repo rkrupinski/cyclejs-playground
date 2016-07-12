@@ -1,6 +1,5 @@
 import { Observable, Subject } from 'rx';
 
-import pick from 'lodash.pick';
 import find from 'lodash.find';
 import findIndex from 'lodash.findIndex';
 
@@ -11,6 +10,7 @@ import storageDriver from '@cycle/storage';
 import constants from './constants';
 import todoForm from './todoForm';
 import todoList from './todoList';
+import todoListPlaceholder from './todoListPlaceholder';
 
 import { serialize, deserialize } from './utils';
 
@@ -19,11 +19,12 @@ const STORAGE_KEY = '__todos';
 function ammendState(DOM) {
   return function mapFn(state) {
     const formSinks = todoForm({ DOM });
-    const listProps$ = Observable.just(pick(state, 'list'));
-    const listSinks = todoList({
-      DOM,
-      props$: listProps$,
-    });
+    const listSinks = state.list.length ?
+        todoList({
+          DOM,
+          props$: Observable.just(state),
+        }) :
+        todoListPlaceholder();
 
     return {
       ...state,
@@ -96,9 +97,9 @@ function model(actions, data$) {
   const editTodoMod$ = actions.updateTodo$
       .map(({ id, body }) => data => {
         const { list } = data;
-        const index = findIndex(list, item => item.id === id);
+        const todo = find(list, item => item.id === id);
 
-        list[index].body = body.trim();
+        todo.body = body.trim();
 
         return data;
       });
