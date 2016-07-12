@@ -104,13 +104,11 @@ function view(state$) {
           style: !editing ? { display: 'none' } : null,
           type: 'text',
           value: propHook(el => {
-            const element = el;
-
-            element.value = body;
+            el.value = body;
 
             if (editing) {
-              element.focus();
-              element.selectionStart = body.length;
+              el.focus();
+              el.selectionStart = body.length;
             }
           }),
         }),

@@ -1,8 +1,9 @@
 import { Observable } from 'rx';
 import { StyleSheet, css } from 'aphrodite';
 
-import { ul } from '@cycle/dom';
+import { ul, div, button } from '@cycle/dom';
 
+import constants from './constants';
 import todoItem from './todoItem';
 import todoListPlaceholder from './todoListPlaceholder';
 
@@ -33,6 +34,15 @@ function ammendState(DOM) {
   };
 }
 
+function intent(DOM) {
+  return Observable.merge(
+    DOM
+        .select('.toggle-btn')
+        .events('click')
+        .map(() => ({ type: constants.TODO_TOGGLE_ALL }))
+  );
+}
+
 function model(props$) {
   return props$;
 }
@@ -43,28 +53,32 @@ function view(state$) {
         const hasTodos = !!state.list.length;
 
         return hasTodos ?
-            ul({
-              className: css(styles.todoList),
-            }, state.list.map(data => data.todoItem.DOM)) :
+            div([
+              ul({
+                className: css(styles.todoList),
+              }, state.list.map(data => data.todoItem.DOM)),
+              button('.toggle-btn', 'Toggle all'),
+            ]) :
             todoListPlaceholder().DOM;
       });
 }
 
 function todoList({ DOM, props$ }) {
+  const action$ = intent(DOM);
   const state$ = model(props$);
 
   const ammendedState$ = state$
       .map(ammendState(DOM))
       .shareReplay(1);
 
-  const action$ = ammendedState$.flatMapLatest(({ list }) =>
+  const itemAction$ = ammendedState$.flatMapLatest(({ list }) =>
       Observable.merge(list.map(data => data.todoItem.action$)));
 
   const vtree$ = view(ammendedState$);
 
   return {
     DOM: vtree$,
-    action$,
+    action$: Observable.merge(action$, itemAction$),
   };
 }
 

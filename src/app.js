@@ -51,6 +51,8 @@ function intent(formActions$, listActions$) {
         .filter(({ type }) => type === constants.TODO_DELETE),
     updateTodo$: listActions$
         .filter(({ type, body }) => type === constants.TODO_DONE_EDITING && body),
+    toggleAll$: listActions$
+        .filter(({ type }) => type === constants.TODO_TOGGLE_ALL),
   };
 }
 
@@ -101,11 +103,22 @@ function model(actions, data$) {
         return data;
       });
 
+  const toggleAllMod$ = actions.toggleAll$
+      .map(() => data => {
+        const { list } = data;
+        const pending = list.some(todo => !todo.completed);
+
+        list.forEach(item => (item.completed = pending));
+
+        return data;
+      });
+
   const modifications$ = Observable.merge(
     addTodoMod$,
     toggleTodoMod$,
     deleteTodoMod$,
-    editTodoMod$
+    editTodoMod$,
+    toggleAllMod$
   );
 
   return data$
