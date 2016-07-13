@@ -42,11 +42,11 @@ function ammendState(DOM) {
   };
 }
 
-function intent(formActions$, listActions$, toolbarActions$) {
-  const formInput$ = formActions$
+function intent(actions$) {
+  const formInput$ = actions$
       .filter(({ type }) => type === constants.FORM_INPUT);
 
-  const formSubmit$ = formActions$
+  const formSubmit$ = actions$
       .filter(({ type }) => type === constants.FORM_SUBMIT);
 
   return {
@@ -54,13 +54,13 @@ function intent(formActions$, listActions$, toolbarActions$) {
         .sample(formSubmit$)
         .pluck('body')
         .filter(Boolean),
-    toggleTodo$: listActions$
+    toggleTodo$: actions$
         .filter(({ type }) => type === constants.TODO_TOGGLE),
-    deleteTodo$: listActions$
+    deleteTodo$: actions$
         .filter(({ type }) => type === constants.TODO_DELETE),
-    updateTodo$: listActions$
+    updateTodo$: actions$
         .filter(({ type, body }) => type === constants.TODO_DONE_EDITING && body),
-    toggleAll$: toolbarActions$
+    toggleAll$: actions$
         .filter(({ type }) => type === constants.TODO_TOGGLE_ALL),
   };
 }
@@ -161,34 +161,23 @@ function main({ DOM, storage }) {
 
   const initialTodosData$ = deserialize(localStorageData$);
 
-  const proxyFormActions$ = new Subject();
-  const proxyListActions$ = new Subject();
-  const proxyToolbarActions$ = new Subject();
+  const proxyActions$ = new Subject();
 
-  const actions = intent(
-    proxyFormActions$,
-    proxyListActions$,
-    proxyToolbarActions$
-  );
+  const actions$ = intent(proxyActions$);
 
-  const state$ = model(actions, initialTodosData$);
+  const state$ = model(actions$, initialTodosData$);
 
   const ammendedState$ = state$
       .map(ammendState(DOM))
       .shareReplay(1);
 
-  const formActions$ = ammendedState$
-      .flatMapLatest(({ form }) => form.action$);
-
-  const listActions$ = ammendedState$
-      .flatMapLatest(({ list }) => list.action$);
-
-  const toolbarActions$ = ammendedState$
-      .flatMapLatest(({ toolbar }) => toolbar.action$);
-
-  formActions$.subscribe(proxyFormActions$);
-  listActions$.subscribe(proxyListActions$);
-  toolbarActions$.subscribe(proxyToolbarActions$);
+  ammendedState$
+      .flatMapLatest(({ form, list, toolbar }) => Observable.merge(
+        form.action$,
+        list.action$,
+        toolbar.action$
+      ))
+      .subscribe(proxyActions$);
 
   const vtree$ = view(ammendedState$);
 
