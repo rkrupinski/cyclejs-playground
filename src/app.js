@@ -11,6 +11,7 @@ import constants from './constants';
 import todoForm from './todoForm';
 import todoList from './todoList';
 import todoListPlaceholder from './todoListPlaceholder';
+import todoListToolbar from './todoListToolbar';
 
 import { serialize, deserialize } from './utils';
 
@@ -19,6 +20,7 @@ const STORAGE_KEY = '__todos';
 function ammendState(DOM) {
   return function mapFn(state) {
     const formSinks = todoForm({ DOM });
+
     const listSinks = state.list.length ?
         todoList({
           DOM,
@@ -26,15 +28,21 @@ function ammendState(DOM) {
         }) :
         todoListPlaceholder();
 
+    const toolbarSinks = todoListToolbar({
+      DOM,
+      props$: Observable.just(state),
+    });
+
     return {
       ...state,
       form: formSinks,
       list: listSinks,
+      toolbar: toolbarSinks,
     };
   };
 }
 
-function intent(formActions$, listActions$) {
+function intent(formActions$, listActions$, toolbarActions$) {
   const formInput$ = formActions$
       .filter(({ type }) => type === constants.FORM_INPUT);
 
@@ -52,7 +60,7 @@ function intent(formActions$, listActions$) {
         .filter(({ type }) => type === constants.TODO_DELETE),
     updateTodo$: listActions$
         .filter(({ type, body }) => type === constants.TODO_DONE_EDITING && body),
-    toggleAll$: listActions$
+    toggleAll$: toolbarActions$
         .filter(({ type }) => type === constants.TODO_TOGGLE_ALL),
   };
 }
@@ -130,14 +138,20 @@ function model(actions, data$) {
 
 function view(state$) {
   return state$
-      .map(state => Observable.combineLatest(
-        state.form.DOM,
-        state.list.DOM,
-        (formTree, listTree) => div([
-          formTree,
-          listTree,
-        ])
-      ));
+      .map(state => {
+        const { form, list, toolbar } = state;
+
+        return Observable.combineLatest(
+          form.DOM,
+          list.DOM,
+          toolbar.DOM,
+          (formTree, listTree, toolbarTree) => div([
+            formTree,
+            listTree,
+            toolbarTree,
+          ])
+        );
+      });
 }
 
 function main({ DOM, storage }) {
@@ -149,8 +163,13 @@ function main({ DOM, storage }) {
 
   const proxyFormActions$ = new Subject();
   const proxyListActions$ = new Subject();
+  const proxyToolbarActions$ = new Subject();
 
-  const actions = intent(proxyFormActions$, proxyListActions$);
+  const actions = intent(
+    proxyFormActions$,
+    proxyListActions$,
+    proxyToolbarActions$
+  );
 
   const state$ = model(actions, initialTodosData$);
 
@@ -164,8 +183,12 @@ function main({ DOM, storage }) {
   const listActions$ = ammendedState$
       .flatMapLatest(({ list }) => list.action$);
 
+  const toolbarActions$ = ammendedState$
+      .flatMapLatest(({ toolbar }) => toolbar.action$);
+
   formActions$.subscribe(proxyFormActions$);
   listActions$.subscribe(proxyListActions$);
+  toolbarActions$.subscribe(proxyToolbarActions$);
 
   const vtree$ = view(ammendedState$);
 

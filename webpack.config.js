@@ -28,7 +28,7 @@ module.exports = {
       verbose: true
     }),
     new HtmlWebpackPlugin({
-      title: 'Cycle.js',
+      title: '💩',
       template: './src/index.html',
       inject: 'body'
     })
