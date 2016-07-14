@@ -1,12 +1,6 @@
 import { Observable } from 'rx';
 
-import { p } from '@cycle/dom';
-
-function view() {
-  return Observable.just(
-    p('Hooray, no todos!')
-  );
-}
+import view from './view';
 
 function todoListPlaceholder() {
   const vtree$ = view();

@@ -1,13 +1,10 @@
-export function deserialize(data$) {
-  return data$
-      .map(data => JSON.parse(data) || {})
-      .map(data => ({ list: [], ...data }));
-}
+export const deserialize = data$ => data$
+    .map(data => JSON.parse(data) || {})
+    .map(data => ({ list: [], ...data }));
 
-export function serialize(state) {
-  return JSON.stringify(state);
-}
+export const serialize = state => JSON.stringify(state);
 
+export const identity = val => val;
 
 class PropertyHook {
   constructor(fn) {
@@ -19,6 +16,4 @@ class PropertyHook {
   }
 }
 
-export function propHook(fn) {
-  return new PropertyHook(fn);
-}
+export const propHook = fn => new PropertyHook(fn);

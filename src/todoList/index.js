@@ -1,16 +1,8 @@
 import { Observable } from 'rx';
-import { StyleSheet, css } from 'aphrodite';
 
-import { ul } from '@cycle/dom';
-
-import todoItem from './todoItem';
-
-const styles = StyleSheet.create({
-  todoList: {
-    padding: 0,
-    listStyle: 'none',
-  },
-});
+import model from './model';
+import view from './view';
+import todoItem from '../todoItem';
 
 function ammendState(DOM) {
   return function mapFn(state) {
@@ -29,17 +21,6 @@ function ammendState(DOM) {
       }),
     };
   };
-}
-
-function model(props$) {
-  return props$;
-}
-
-function view(state$) {
-  return state$
-      .map(state => ul({
-        className: css(styles.todoList),
-      }, state.list.map(data => data.todoItem.DOM)));
 }
 
 function todoList({ DOM, props$ }) {

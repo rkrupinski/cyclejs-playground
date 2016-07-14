@@ -1,9 +1,8 @@
 import { Observable } from 'rx';
 
-import { div } from '@cycle/dom';
-
-import toggleAllBtn from './toggleAllBtn';
-
+import model from './model';
+import view from './view';
+import toggleAllBtn from '../toggleAllBtn';
 
 function ammendState(DOM) {
   return function mapFn(state) {
@@ -19,24 +18,6 @@ function ammendState(DOM) {
       }),
     };
   };
-}
-
-function model(props$) {
-  return props$;
-}
-
-function view(state$) {
-  return state$
-      .map(state => {
-        const { toggle } = state;
-
-        return Observable.combineLatest(
-          toggle.DOM,
-          toggleTree => div([
-            toggleTree,
-          ])
-        );
-      });
 }
 
 function todoListToolbar({ DOM, props$ }) {
