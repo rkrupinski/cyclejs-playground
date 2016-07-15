@@ -1,7 +1,5 @@
 import { Observable, Subject } from 'rx';
-
-import find from 'lodash.find';
-import findIndex from 'lodash.findIndex';
+import { v4 } from 'node-uuid';
 
 import { run } from '@cycle/core';
 import { makeDOMDriver, div } from '@cycle/dom';
@@ -62,72 +60,87 @@ function intent(actions$) {
         .filter(({ type, body }) => type === constants.TODO_DONE_EDITING && body),
     toggleAll$: actions$
         .filter(({ type }) => type === constants.TODO_TOGGLE_ALL),
+    clearCompleted$: actions$
+        .filter(({ type }) => type === constants.TODO_CLEAR_COMPLETED),
   };
 }
 
 function model(actions, data$) {
   const addTodoMod$ = actions.addTodo$
-      .map(body => data => {
-        const { list } = data;
-        const lastId = list.length ?
-            list[list.length - 1].id :
-            0;
-
-        list.push({
-          id: lastId + 1,
-          completed: false,
-          body: body.trim(),
-        });
-
-        return data;
-      });
+      .map(body => data => ({
+        ...data,
+        list: [
+          ...data.list,
+          {
+            id: v4(),
+            completed: false,
+            body: body.trim(),
+          },
+        ],
+      }));
 
   const toggleTodoMod$ = actions.toggleTodo$
-      .map(({ id }) => data => {
-        const { list } = data;
-        const todo = find(list, item => item.id === id);
+      .map(({ id }) => data => ({
+        ...data,
+        list: data.list.map(todo => {
+          if (todo.id !== id) {
+            return todo;
+          }
 
-        todo.completed = !todo.completed;
-
-        return data;
-      });
+          return {
+            ...todo,
+            completed: !todo.completed,
+          };
+        }),
+      }));
 
   const deleteTodoMod$ = actions.deleteTodo$
-      .map(({ id }) => data => {
-        const { list } = data;
-        const index = findIndex(list, item => item.id === id);
-
-        list.splice(index, 1);
-
-        return data;
-      });
+      .map(({ id }) => data => ({
+        ...data,
+        list: data.list.filter(todo => todo.id !== id),
+      }));
 
   const editTodoMod$ = actions.updateTodo$
-      .map(({ id, body }) => data => {
-        const { list } = data;
-        const todo = find(list, item => item.id === id);
+      .map(({ id, body }) => data => ({
+        ...data,
+        list: data.list.map(todo => {
+          if (todo.id !== id) {
+            return todo;
+          }
 
-        todo.body = body.trim();
-
-        return data;
-      });
+          return {
+            ...todo,
+            body: body.trim(),
+          };
+        }),
+      }));
 
   const toggleAllMod$ = actions.toggleAll$
       .map(() => data => {
-        const { list } = data;
-        const pending = list.some(todo => !todo.completed);
+        const pending = data.list.some(({ completed }) => !completed);
 
-        list.forEach(item => (item.completed = pending));
-
-        return data;
+        return {
+          ...data,
+          list: data.list.map(item => ({
+            ...item,
+            completed: pending,
+          })),
+        };
       });
+
+  const clearCompletedMod$ = actions.clearCompleted$
+      .map(() => data => ({
+        ...data,
+        list: data.list.filter(({ completed }) => !completed),
+      }));
 
   const modifications$ = Observable.merge(
     addTodoMod$,
     toggleTodoMod$,
     deleteTodoMod$,
     editTodoMod$,
-    toggleAllMod$
+    toggleAllMod$,
+    clearCompletedMod$
   );
 
   return data$

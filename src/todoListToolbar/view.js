@@ -5,12 +5,14 @@ import { div } from '@cycle/dom';
 function view(state$) {
   return state$
       .map(state => {
-        const { toggle } = state;
+        const { toggleBtn, clearBtn } = state;
 
         return Observable.combineLatest(
-          toggle.DOM,
-          toggleTree => div([
-            toggleTree,
+          toggleBtn.DOM,
+          clearBtn.DOM,
+          (toggleBtnTree, clearBtnTree) => div([
+            toggleBtnTree,
+            clearBtnTree,
           ])
         );
       });
