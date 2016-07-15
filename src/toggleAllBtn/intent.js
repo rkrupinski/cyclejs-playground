@@ -8,7 +8,8 @@ function intent(DOM) {
         .select('.toggle-btn')
         .events('click')
         .map(() => ({ type: constants.TODO_TOGGLE_ALL }))
-  );
+  )
+      .share();
 }
 
 export default intent;
