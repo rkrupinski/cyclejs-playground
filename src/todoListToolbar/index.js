@@ -4,14 +4,15 @@ import model from './model';
 import view from './view';
 import toggleAllBtn from '../toggleAllBtn';
 import clearCompletedBtn from '../clearCompletedBtn';
+import itemsLeft from '../itemsLeft';
 
-function hasCompleted(todos) {
-  return todos.some(todo => todo.completed);
-}
 
 function ammendState(DOM) {
   return function mapFn(state) {
     const { list } = state;
+    const completedCount = list
+        .filter(({ completed }) => completed)
+        .length;
 
     return {
       ...state,
@@ -24,7 +25,12 @@ function ammendState(DOM) {
       clearBtn: clearCompletedBtn({
         DOM,
         props$: Observable.just({
-          disabled: !hasCompleted(list),
+          disabled: !!completedCount,
+        }),
+      }),
+      itemsLeft: itemsLeft({
+        props$: Observable.just({
+          pending: list.length - completedCount,
         }),
       }),
     };

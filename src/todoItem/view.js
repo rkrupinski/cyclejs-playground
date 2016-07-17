@@ -6,22 +6,16 @@ import { propHook } from '../utils';
 
 const styles = StyleSheet.create({
   todo: {
-    marginBottom: 5,
-  },
-  todoToggle: {
-    margin: '0 5px 0 0',
+    marginBottom: 10,
   },
   todoBody: {
+    lineHeight: 1,
     cursor: 'pointer',
     userSelect: 'none',
     ':hover': {
       background: 'lightcyan',
+      outline: '2px solid lightcyan',
     },
-  },
-  todoInput: {
-  },
-  todoDelete: {
-    marginLeft: 5,
   },
 });
 
@@ -30,18 +24,17 @@ function view(state$) {
       .map(({ body, completed, editing }) => li({
         className: `${css(styles.todo)}`,
       }, [
-        input({
-          className: `${css(styles.todoToggle)} todo-toggle`,
+        input('.todo-toggle', {
           type: 'checkbox',
           checked: completed,
         }),
+        ' ',
         span({
           className: `${css(styles.todoBody)} todo-body`,
           style: editing ? { display: 'none' } : null,
           title: 'Edit',
         }, body),
-        input({
-          className: `${css(styles.todoInput)} todo-input`,
+        input('.todo-input', {
           style: !editing ? { display: 'none' } : null,
           type: 'text',
           value: propHook(el => {
@@ -53,9 +46,8 @@ function view(state$) {
             }
           }),
         }),
-        button({
-          className: `${css(styles.todoDelete)} todo-delete`,
-        }, 'x'),
+        ' ',
+        button('.todo-delete', 'x'),
       ]));
 }
 
