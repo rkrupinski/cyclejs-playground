@@ -6,27 +6,27 @@ import filterLink from '../filterLink';
 import constants from '../constants';
 
 function view(state$) {
-  return state$.flatMapLatest(({ filter }) =>
+  return state$.flatMapLatest(({ filter: currentFilter }) =>
       Observable.combineLatest(
         filterLink({
           props$: Observable.just({
             label: 'all',
             filter: constants.FILTER_ALL,
-            currentFilter: filter,
+            currentFilter,
           }),
         }).DOM,
         filterLink({
           props$: Observable.just({
             label: 'pending',
             filter: constants.FILTER_PENDING,
-            currentFilter: filter,
+            currentFilter,
           }),
         }).DOM,
         filterLink({
           props$: Observable.just({
             label: 'completed',
             filter: constants.FILTER_COMPLETED,
-            currentFilter: filter,
+            currentFilter,
           }),
         }).DOM,
         (allLinkTree, pendingLinkTree, completedLinkTree) => div([
