@@ -6,7 +6,7 @@ function intent(DOM) {
   return Observable.merge(
     DOM
         .select('.todo-toggle')
-        .events('click')
+        .events('change')
         .map(() => ({ type: constants.TODO_TOGGLE })),
     DOM
         .select('.todo-delete')

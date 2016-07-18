@@ -6,37 +6,34 @@ import view from './view';
 import todoForm from '../todoForm';
 import todoList from '../todoList';
 import todoListToolbar from '../todoListToolbar';
-import todoListPlaceholder from '../todoListPlaceholder';
+import todoNav from '../todoNav';
 import { serialize, deserialize } from '../utils';
 
 const STORAGE_KEY = '__todos';
 
 function ammendState(DOM) {
   return function mapFn(state) {
-    const formSinks = todoForm({ DOM });
-
-    const listSinks = state.list.length ?
-        todoList({
-          DOM,
-          props$: Observable.just(state),
-        }) :
-        todoListPlaceholder();
-
-    const toolbarSinks = todoListToolbar({
-      DOM,
-      props$: Observable.just(state),
-    });
+    const { list, filter } = state;
 
     return {
       ...state,
-      form: formSinks,
-      list: listSinks,
-      toolbar: toolbarSinks,
+      form: todoForm({ DOM }),
+      list: todoList({
+        DOM,
+        props$: Observable.just({ list, filter }),
+      }),
+      toolbar: todoListToolbar({
+        DOM,
+        props$: Observable.just({ list }),
+      }),
+      nav: todoNav({
+        props$: Observable.just({ filter }),
+      }),
     };
   };
 }
 
-function app({ DOM, storage }) {
+function app({ DOM, storage, initialHash, hashChange }) {
   const localStorageData$ = storage.local
       .getItem(STORAGE_KEY)
       .take(1);
@@ -45,7 +42,7 @@ function app({ DOM, storage }) {
 
   const proxyActions$ = new Subject();
 
-  const actions$ = intent(proxyActions$);
+  const actions$ = intent(proxyActions$, initialHash, hashChange);
 
   const state$ = model(actions$, initialTodosData$);
 

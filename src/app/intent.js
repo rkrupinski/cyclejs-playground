@@ -1,6 +1,8 @@
+import { Observable } from 'rx';
+
 import constants from '../constants';
 
-function intent(actions$) {
+function intent(actions$, initialHash, hashChange) {
   const formInput$ = actions$
       .filter(({ type }) => type === constants.FORM_INPUT);
 
@@ -8,6 +10,15 @@ function intent(actions$) {
       .filter(({ type }) => type === constants.FORM_SUBMIT);
 
   return {
+    routeChange$: Observable.concat(
+      initialHash.map(hash => hash.slice(1)),
+      hashChange.map(e => e.newURL.split('#').pop())
+    )
+        .map(route => {
+          const [, filter] = /\/?([^#]*)$/.exec(route);
+
+          return filter;
+        }),
     addTodo$: formInput$
         .sample(formSubmit$)
         .pluck('body')

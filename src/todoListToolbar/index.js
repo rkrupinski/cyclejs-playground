@@ -25,7 +25,7 @@ function ammendState(DOM) {
       clearBtn: clearCompletedBtn({
         DOM,
         props$: Observable.just({
-          disabled: !!completedCount,
+          disabled: !completedCount,
         }),
       }),
       itemsLeft: itemsLeft({

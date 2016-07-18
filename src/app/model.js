@@ -2,6 +2,12 @@ import { Observable } from 'rx';
 import { v4 } from 'node-uuid';
 
 function model(actions, data$) {
+  const routeChangeMod$ = actions.routeChange$
+      .map(filter => data => ({
+        ...data,
+        filter,
+      }));
+
   const addTodoMod$ = actions.addTodo$
       .map(body => data => ({
         ...data,
@@ -71,6 +77,7 @@ function model(actions, data$) {
       }));
 
   const modifications$ = Observable.merge(
+    routeChangeMod$,
     addTodoMod$,
     toggleTodoMod$,
     deleteTodoMod$,

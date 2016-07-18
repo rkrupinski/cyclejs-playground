@@ -6,7 +6,7 @@ import { propHook } from '../utils';
 
 const styles = StyleSheet.create({
   todo: {
-    marginBottom: 10,
+    marginBottom: 5,
   },
   todoBody: {
     lineHeight: 1,
@@ -26,7 +26,7 @@ function view(state$) {
       }, [
         input('.todo-toggle', {
           type: 'checkbox',
-          checked: completed,
+          checked: propHook(el => (el.checked = completed)),
         }),
         ' ',
         span({
