@@ -42,9 +42,9 @@ function app({ DOM, storage, initialHash, hashChange }) {
 
   const proxyActions$ = new Subject();
 
-  const actions$ = intent(proxyActions$, initialHash, hashChange);
+  const actions = intent(proxyActions$, initialHash, hashChange);
 
-  const state$ = model(actions$, initialTodosData$);
+  const state$ = model(actions, initialTodosData$);
 
   const ammendedState$ = state$
       .map(ammendState(DOM))
